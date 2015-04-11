@@ -1,6 +1,6 @@
 package com.marimon.torrent.delolla
 
-import akka.actor.{Props, ActorSystem}
+import akka.actor.{ActorRef, Props, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit}
 import scala.concurrent.duration._
 import org.scalatest.{FlatSpecLike, BeforeAndAfterAll, ShouldMatchers}
@@ -24,15 +24,18 @@ class TorrentParserActorSpec(_system: ActorSystem)
   behavior of "Torrent Parser Actor"
 
   it should "parse Strings" in {
-
     subject ! TorrentParserActor.Reset
-    subject ! '4'
-    subject ! 'a'
-    subject ! 's'
-    subject ! 'd'
-    subject ! 'f'
+    send (subject, "4asdf")
+    expectMsg(500.milliseconds, TorrentParserActor.BencodeString("asdf"))
+  }
 
-    expectMsg(500.milliseconds, TorrentParserActor.String("asdf"))
+  it should "parse Integers (using signed 64bit)" in {
+    subject ! TorrentParserActor.Reset
+    send(subject, "i123e")
+    expectMsg(500.milliseconds, TorrentParserActor.Integer(123))
+  }
 
+  private def send (actor:ActorRef, msg:String) = {
+    msg.toCharArray.foreach(actor ! _ )
   }
 }
